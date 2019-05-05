@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from typing import Iterable
 
 from models.pse_search_result import PSESearchResult
-from models.quarterly_report import QuarterlyReport
+from models.quarterly_report import QuarterlyReport, AnnualReport
 
 
 class PSE(object):
@@ -53,6 +53,26 @@ class PSEDocument(object):
         soup: BeautifulSoup = BeautifulSoup(response.text, "html.parser")
         return QuarterlyReport.from_soup(soup)
 
+    @staticmethod
+    def get_annual_report(document_id):
+        # First, get the file ID of the document.
+        response: Response = get(PSEDocument.DOCUMENT_URL, {
+            'edge_no': document_id
+        })
+
+        soup: BeautifulSoup = BeautifulSoup(response.text, "html.parser")
+        # Trim to get the quarterly report file id.
+        file_id: str = soup.iframe['src'] \
+            .replace('/downloadHtml.do?file_id=', '')
+
+        # Second, get the quarterly report file itself.
+        response: Response = get(PSEDocument.DOWNLOAD_FILE_URL, {
+            'file_id': file_id
+        })
+        soup: BeautifulSoup = BeautifulSoup(response.text, "html.parser")
+        return AnnualReport.from_soup(soup)
+
 
 class PSEFinancialTemplate(object):
     QUARTERLY = 'Quarterly'
+    ANNUAL = 'Annual'

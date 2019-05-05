@@ -34,6 +34,39 @@ class QuarterlyReport(object):
         return cls(quarter_end, company_name, balance_sheet, income_statement)
 
 
+class AnnualReport(object):
+    def __init__(self, year_end: str, company_name: str,
+                 balance_sheet: 'BalanceSheet', income_statement: 'IncomeStatement'):
+        self.year_end: str = year_end
+        self.company_name: str = company_name
+        self.balance_sheet: BalanceSheet = balance_sheet
+        self.income_statement: IncomeStatement = income_statement
+
+    def __repr__(self):
+        return "<QuarterlyReport [%s]:[%s]>" % (self.company_name, self.year_end)
+
+    @classmethod
+    def from_soup(cls, soup: BeautifulSoup) -> 'QuarterlyReport':
+        content_box: BeautifulSoup = soup.find("div", {
+            'id': 'contentBox'
+        })
+        balance_sheet_table: BeautifulSoup = soup.find("table", {
+            'id': 'BS'
+        })
+        income_statement_table: BeautifulSoup = soup.find("table", {
+            'id': 'IS'
+        })
+
+        year_end = content_box.find_all("dd")[0] \
+            .span.string
+        company_name = content_box.find_all("dd")[3] \
+            .span.string
+        balance_sheet = BalanceSheet.from_soup(balance_sheet_table)
+        income_statement = IncomeStatement.from_soup(income_statement_table)
+
+        return cls(year_end, company_name, balance_sheet, income_statement)
+
+
 class BalanceSheet(object):
     PERIOD_ENDED_COLUMN_INDEX = 0
     PERIOD_END_INDEX = 1
@@ -52,13 +85,13 @@ class BalanceSheet(object):
                  stockholders_equity_parent: int, book_value_per_share: int):
         self.period_end: int = period_end
         self.current_assets: int = current_assets
-        self.total_assets: int = 0
-        self.current_liabilities: int = 0
-        self.total_liabilities: int = 0
-        self.retained_earnings: int = 0
-        self.stockholders_equity: int = 0
-        self.stockholders_equity_parent: int = 0
-        self.book_value_per_share: int = 0
+        self.total_assets: int = total_assets
+        self.current_liabilities: int = current_liabilities
+        self.total_liabilities: int = total_liabilities
+        self.retained_earnings: int = retained_earnings
+        self.stockholders_equity: int = stockholders_equity
+        self.stockholders_equity_parent: int = stockholders_equity_parent
+        self.book_value_per_share: int = book_value_per_share
 
     def __repr__(self):
         return "<BalanceSheet [%s]>" % (self.period_end)
@@ -109,16 +142,16 @@ class IncomeStatement(object):
                  income_before_tax: int, income_tax_expense: int, net_income: int,
                  net_income_parent: int, earnings_per_share_basic: int,
                  earnings_per_share_diluted: int):
-        self.gross_revenue: int = 0
-        self.gross_expense: int = 0
-        self.non_operating_income: int = 0
-        self.non_operating_expense: int = 0
-        self.income_before_tax: int = 0
-        self.income_tax_expense: int = 0
-        self.net_income: int = 0
-        self.net_income_parent: int = 0
-        self.earnings_per_share_basic: int = 0
-        self.earnings_per_share_diluted: int = 0
+        self.gross_revenue: int = gross_revenue
+        self.gross_expense: int = gross_expense
+        self.non_operating_income: int = non_operating_income
+        self.non_operating_expense: int = non_operating_expense
+        self.income_before_tax: int = income_before_tax
+        self.income_tax_expense: int = income_tax_expense
+        self.net_income: int = net_income
+        self.net_income_parent: int = net_income_parent
+        self.earnings_per_share_basic: int = earnings_per_share_basic
+        self.earnings_per_share_diluted: int = earnings_per_share_diluted
 
     @classmethod
     def from_soup(cls, soup: BeautifulSoup) -> 'BalanceSheet':
